@@ -1,0 +1,90 @@
+@using Biblioteca.Aplicacion.Entidades
+@page "/docentes"
+
+@inject NavigationManager Navigator;
+@inject EliminarDocenteUseCase EliminarDocenteUseCase
+@inject ListarDocenteUseCase ListarDocenteUseCase
+
+<PageTitle>Biblioteca - Docentes</PageTitle>
+
+<DialogoConfirmacion @ref="dialogo" OnConfirmado="Eliminar"/>
+<button type="button" class="btn btn-success" @onclick="nuevoDocente">
+    <i class="fas fa-check"></i> Registrar nuevo docente
+</button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+
+            <th>Direccion</th>
+            <th>Facultad</th>
+            <th>Telefono</th>
+            <th>Correo</th>
+            <th>Año inicio</th>
+            <th>Nro matricula</th>
+            <th>Nro carnet</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+ <tbody>
+
+ @foreach (var docente in _lista)
+ {
+ <tr>
+    <td>@docente.id</td>
+    <td>@docente.nombre</td>
+    <td>@docente.apellido</td>
+    <td>@docente.direccion</td>
+    <td>@docente.facultad</td>
+    <td>@docente.telefono</td>
+    <td>@docente.correo</td>
+    <td>@docente.añoInicio</td>
+    <td>@docente.nroMatricula</td>
+    <td>@docente.numero_Carnet</td>
+    <td>
+    <button class="btn btn-primary">
+    <span class="oi oi-pencil" @onclick="()=>ModificarDocente(docente.id)"></span>
+    </button>
+    <button class="btn btn-danger" @onclick="()=>ConfirmarEliminacion(docente)">
+    <span class="oi oi-trash"></span>
+    </button>
+    </td>
+
+ </tr>
+ }
+ </tbody
+
+</table>
+
+@code{
+    List<Docente> _lista = new List<Docente>();
+        protected override void OnInitialized()
+        {
+            _lista = ListarDocenteUseCase.Ejecutar();
+        }
+    DialogoConfirmacion dialogo = null!;
+    Docente? _docenteParaEliminar = null;
+
+    private void ModificarDocente(int id){
+        Navigator.NavigateTo($"/docente/{id}");
+    }
+    private void ConfirmarEliminacion(Docente docente)
+    {
+        _docenteParaEliminar = docente;
+        dialogo.CambiarMensaje($"¿Desea eliminar al Docente {docente.nombre} {docente.apellido}?");
+        dialogo.Mostrar();
+    }
+    private void Eliminar()
+    {
+    if (_docenteParaEliminar != null)
+    {
+    EliminarDocenteUseCase.Ejecutar(_docenteParaEliminar.id);
+    _lista = ListarDocenteUseCase.Ejecutar(); //se actualiza la lista de clientes
+    }
+    }
+    private void nuevoDocente(){
+        Navigator.NavigateTo("docente");
+    }
+}

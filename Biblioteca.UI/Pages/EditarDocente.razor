@@ -1,0 +1,73 @@
+@page "/docente/{id:int?}"
+@inject ObtenerDocenteUseCase ObtenerDocenteUseCase
+@inject ModificarDocenteUseCase ModificarDocenteUseCase
+@inject NavigationManager Navegador;
+@inject AgregarDocenteUseCase AgregarDocenteUseCase
+
+
+
+
+
+
+<button type="button" class="btn btn-success" @onclick="volver">
+    <i class="fas fa-check"></i> Volver
+</button>
+@if (_esNuevoDocente){
+    <PageTitle>Biblioteca - Registrar docente</PageTitle>
+    <h3>Agregando un nuevo Docente</h3>
+}
+else{
+    <PageTitle>Biblioteca - Editar docente</PageTitle>
+    <h3>Modificando al Docente "@_docente.nombre"</h3>
+}
+
+<label for="nroMatricula">Numero de matricula: </label>
+<input placeholder="Nro de matricula" @bind="_docente.nroMatricula" class="form-control">
+<label for="numero_Carnet">Numero de carnet: </label>
+<input placeholder="Nro de carnet" @bind="_docente.numero_Carnet" class="form-control">
+<label for="añoInicio">Año de inicio: </label>
+<input placeholder="Año de inicio" @bind="_docente.añoInicio" class="form-control">
+<label for="direccion">Direccion: </label>
+<input placeholder="Direccion" @bind="_docente.direccion" class="form-control">
+<label for="nombre">Nombre: </label>
+<input placeholder="Nombre" @bind="_docente.nombre" class="form-control">
+<label for="apellido">Apellido: </label>
+<input placeholder="Apellido" @bind="_docente.apellido" class="form-control">
+<label for="facultad">Facultad: </label>
+<input placeholder="Facultad" @bind="_docente.facultad" class="form-control">
+<label for="telefono">Telefono: </label>
+<input placeholder="Telefono" @bind="_docente.telefono" class="form-control">
+<label for="correo">Correo: </label>
+<input placeholder="Correo" @bind="_docente.correo" class="form-control">
+
+<button class="btn btn-primary" @onclick="Aceptar">Aceptar</button>
+@code {
+ Docente _docente = new Docente();
+
+ [Parameter] public int? id { get; set; }
+ bool _esNuevoDocente=true;
+ protected override void OnParametersSet(){
+    if (id != null){
+        var cli_hallado = ObtenerDocenteUseCase.Ejecutar(id.Value);
+        if (cli_hallado != null){
+            _docente = cli_hallado;
+            _esNuevoDocente=false;
+        }
+    }
+ }
+
+
+ void Aceptar(){
+    if (_esNuevoDocente){
+        AgregarDocenteUseCase.Ejecutar(_docente);
+    }else{
+        ModificarDocenteUseCase.Ejecutar(_docente);
+    }
+    _docente = new Docente();
+    volver();
+ }
+
+ void volver(){
+    Navegador.NavigateTo("/docentes");
+ }
+}

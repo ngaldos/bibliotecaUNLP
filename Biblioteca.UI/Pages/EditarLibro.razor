@@ -1,0 +1,70 @@
+@page "/libro/{id:int?}"
+@inject ObtenerLibroUseCase ObtenerLibroUseCase
+@inject ModificarLibroUseCase ModificarLibroUseCase
+@inject NavigationManager Navegador;
+@inject AgregarLibroUseCase AgregarLibroUseCase
+
+
+
+
+<button type="button" class="btn btn-success" @onclick="volver">
+    <i class="fas fa-check"></i> Volver
+</button>
+@if (_esNuevoLibro){
+    <PageTitle>Biblioteca - Registrar libro</PageTitle>
+    <h3>Agregando un nuevo Libro</h3>
+}
+else{
+    <PageTitle>Biblioteca - Editar libro</PageTitle>
+    <h3>Modificando al Libro "@_libro.titulo"</h3>
+}
+<label for="titulo">Titulo: </label>
+<input placeholder="El sr de los anillos" @bind="_libro.titulo" class="form-control">
+<label for="autor">Autor: </label>
+<input placeholder="J. R. R. Tolkien" @bind="_libro.autor" class="form-control">
+<label for="añoPublicacion">Año de publicacion: </label>
+<input placeholder="1953" @bind="_libro.añoPublicacion" class="form-control">
+<label for="genero">Genero: </label>
+<input placeholder="Fantasia" @bind="_libro.genero" class="form-control">
+<label for="numeroEjemplar">Cantidad de ejemplares disponibles para prestar: </label>
+<input placeholder="1973" @bind="_libro.numeroEjemplar" class="form-control">
+
+@if(_esNuevoLibro){
+    <label for="numeroEjemplarConst">Cantidad de ejemplares: </label>
+    <input placeholder="Ejemplares" @bind="_libro.numeroEjemplarConst" class="form-control">
+}
+
+
+<button class="btn btn-primary" @onclick="Aceptar">Aceptar</button>
+@code {
+ Libro _libro = new Libro();
+
+ [Parameter] public int? id { get; set; }
+ bool _esNuevoLibro=true;
+ protected override void OnParametersSet()
+ {
+ if (id != null)
+ {
+ var cli_hallado = ObtenerLibroUseCase.Ejecutar(id.Value);
+ if (cli_hallado != null)
+ {
+ _libro = cli_hallado;
+ _esNuevoLibro=false;
+ }
+ }
+ }
+
+
+void volver(){
+    Navegador.NavigateTo("/");
+}
+ void Aceptar(){
+    if (_esNuevoLibro)
+        AgregarLibroUseCase.Ejecutar(_libro);
+    else
+        ModificarLibroUseCase.Ejecutar(_libro);
+
+    _libro = new Libro();
+    Navegador.NavigateTo("/");
+ }
+}

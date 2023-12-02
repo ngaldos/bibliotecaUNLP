@@ -1,0 +1,231 @@
+@using Biblioteca.Aplicacion.Entidades
+@page "/prestamos"
+
+@inject NavigationManager Navegador;
+@inject DevolverLibroUseCase DevolverLibroUseCase
+@inject ListarPrestamoUseCase ListarPrestamoUseCase
+
+
+@inject RealizarPrestamoUseCase RealizarPrestamoUseCase;
+@inject ListarLibroUseCase ListarLibroUseCase
+@inject ListarDocenteUseCase ListarDocenteUseCase;
+@inject ListarEstudianteUseCase ListarEstudianteUseCase;
+
+<PageTitle>Biblioteca - Prestamos</PageTitle>
+
+<DialogoConfirmacion @ref="dialogo" OnConfirmado="Eliminar"/>
+
+
+
+    
+    @if(devolucionEnCurso){
+        <div class="div--devolucion">
+            <button type="button" class="btn btn-success" @onclick="cancelarDevolucion">
+                <i class="fas fa-check"></i> Cancelar devolucion
+            </button>
+            <h4>Devolucion del prestamo con ID: @_prestamoParaDevoler?.Id. Libro ID: @_prestamoParaDevoler?.Idlibro. Persona ID: @_prestamoParaDevoler?.Idpersona</h4>
+            <div class="input">
+                <label for="estadoInput">Describa el estado del libro a devolver.</label>
+                <input id="estadoInput"type="text" placeholder="Muy buenas condiciones" @oninput="@(e => handleChange(e?.Value?.ToString()))">
+            </div>
+            @if(estado != ""){
+                <button class="btn--devolucion" @onclick="realizarDevolucion">Devolver libro</button>
+            }
+        </div>
+    }else{
+        <h3>Generar un nuevo prestamo</h3>
+        @*Selects para crear prestamo*@
+        <form>
+            <div>
+                <label for="libro">Libro: </label>
+                <select id="libro" @onchange="(e) => HandleLibroChange(e)">
+                    <option value="0">--  Seleccione un libro.  --</option>
+                    @{foreach(var l in _listaLibro){
+                        if (l.Id > 0 && l.numeroEjemplar > 0){
+                            <option value=@l.Id>@l.titulo, @l.autor.</option>
+                        }else if(l.Id > 0 && l.numeroEjemplar == 0){
+                            <option disabled=true value=@l.Id>@l.titulo, @l.autor. *Sin ejemplares</option>
+                        }
+                    }}
+                </select>
+            </div>
+            <div>
+                <label for="persona">Persona: </label>
+                <select id="persona" @onchange="(e) => HandlePersonaChange(e)">
+                    <option value="0">--  Seleccione una persona.  --</option>
+                    @foreach(var p in _listaDocente){
+                        if (p.id != 0){
+                            <option value=@p.id>@p.nombre, @p.apellido.</option>
+                        }
+                    }
+                    @foreach(var p in _listaEstudiante){
+                        if (p.id != 0){
+                            <option value=@p.id>@p.nombre, @p.apellido.</option>
+                        }
+                    }
+                </select>
+            </div>
+            @if(libroID > 0 && personaID > 0){
+                <button @onclick="()=> HandleSubmit(libroID, personaID)" >Realizar Prestamo</button>
+            }else{
+                <span>Seleccione un libro y una persona para realizar el prestamo.</span>
+            }
+        </form>
+    
+
+        @*Tabla de prestamos*@
+        <div class="div--tablaPrestamos">
+            <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ID Persona</th>
+                            <th>ID Libro</th>
+
+                            <th>Fecha prestamo</th>
+                            <th>Fecha devolucion</th>
+                            <th>Estado</th>
+
+                            <th>Acción</th>
+                            
+                        </tr>
+                    </thead>
+                <tbody>
+
+                @foreach (var prestamo in _lista)
+                {
+                <tr>
+                    <td>@prestamo?.Id</td>
+                    <td>@prestamo?.Idpersona</td>
+                    <td>@prestamo?.Idlibro</td>
+                    <td>@prestamo?.fechaPrestamo</td>
+                    <td>@prestamo?.fechaDevolucion</td>
+                    @if (prestamo?.estado != ""){
+                        <td>@prestamo?.estado</td>
+                    }else{
+                        <td> **Sin devolver** </td>
+                    }
+                    
+                    @if (prestamo != null && prestamo.estado == null) {
+                    <td>
+                        <button class="btn btn-primary">
+                        <span class="oi oi-pencil" @onclick="()=>ConfirmarDevolucion(prestamo)"></span>
+                        </button>
+                    </td>
+                    }
+
+                </tr>
+                }
+                </tbody
+
+            </table>
+        </div>
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+@code{
+    
+    List<Prestamo> _lista = new List<Prestamo>();
+
+    int personaID {get; set;} = 0;
+    int libroID {get; set;} = 0;
+    List<Estudiante> _listaEstudiante = new List<Estudiante>();
+    List<Docente> _listaDocente = new List<Docente>();
+    List <Libro> _listaLibro = new List<Libro>();
+    protected override void OnInitialized()
+    {
+        _lista = ListarPrestamoUseCase.Ejecutar();
+        _listaDocente = ListarDocenteUseCase.Ejecutar();
+        _listaEstudiante = ListarEstudianteUseCase.Ejecutar();
+        _listaLibro= ListarLibroUseCase.Ejecutar();
+    }
+    DialogoConfirmacion dialogo = null!;
+    Prestamo? _prestamoParaEliminar = null;
+    Prestamo? _prestamoParaDevoler = null;
+
+    string estado {get; set;}= "";
+    bool devolucionEnCurso = false;
+
+    private void ConfirmarEliminacion(Prestamo prestamo){
+        _prestamoParaEliminar = prestamo;
+        dialogo.CambiarMensaje($"¿Desea dar de alta al Prestamo?");
+        dialogo.Mostrar();
+    }
+    private void Eliminar(){
+        if (_prestamoParaEliminar != null){
+            DevolverLibroUseCase.Ejecutar(_prestamoParaEliminar);
+            _lista = ListarPrestamoUseCase.Ejecutar(); //se actualiza la lista de clientes
+        }
+    }
+    private void ConfirmarDevolucion (Prestamo prestamo){
+        devolucionEnCurso= true;
+        _prestamoParaDevoler = prestamo;
+        StateHasChanged();
+    }
+
+    private void handleChange (String? nuevoEstado){
+        if (nuevoEstado != null){
+            estado= nuevoEstado;
+            StateHasChanged();
+        }
+    }
+    private void realizarDevolucion(){
+        if (_prestamoParaDevoler != null){
+            _prestamoParaDevoler.estado = estado;
+            DevolverLibroUseCase.Ejecutar(_prestamoParaDevoler);
+            devolucionEnCurso= false;
+            StateHasChanged();
+        }
+    }
+
+    private void cancelarDevolucion(){
+        devolucionEnCurso= false;
+    }
+
+
+    void HandlePersonaChange(ChangeEventArgs e)
+    {
+        try{
+            if (int.TryParse(e?.Value?.ToString(), out int resultado)){
+            personaID = resultado;
+            StateHasChanged();
+            }
+        }catch{
+            throw;
+        }
+    }
+    void HandleLibroChange(ChangeEventArgs e)
+    {
+        try{
+            if (int.TryParse(e?.Value?.ToString(), out int resultado)){
+                libroID = resultado;
+                StateHasChanged();
+            }
+        }catch{
+            throw;
+        }
+    }
+
+    void HandleSubmit (int libro, int persona){
+        try{
+            String fechaAct = DateTime.Now.ToShortDateString();
+            String fechaDevolucion = (DateTime.Now.AddDays(7)).ToShortDateString();
+            Prestamo prestamoFinal  = new Prestamo(persona, libro, fechaAct, fechaDevolucion);
+            RealizarPrestamoUseCase.Ejecutar(prestamoFinal);
+            StateHasChanged();
+        }catch{
+            throw;
+        }
+    }   
+}

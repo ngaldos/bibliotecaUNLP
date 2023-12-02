@@ -1,0 +1,16 @@
+.div--tablaPrestamos{
+    padding-top: 100px;
+}
+
+.btn--devolucion{
+    padding-left: 6px;
+    border-radius: 3.75px;
+    background-color: rgb(58, 231, 58)
+
+    
+}
+
+.btn--devolucion:hover{
+    transform: scale(1.1);
+    background-color: rgba(12, 199, 74, 0.808);
+}

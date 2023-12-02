@@ -1,0 +1,121 @@
+﻿@page "/"
+@inject NavigationManager Navigator;
+@inject EliminarLibroUseCase EliminarLibroUseCase
+@inject ListarLibroUseCase ListarLibroUseCase
+@inject ListarDocenteUseCase ListarDocenteUseCase;
+@inject ListarEstudianteUseCase ListarEstudianteUseCase;
+@inject RealizarPrestamoUseCase RealizarPrestamoUseCase;
+@using Biblioteca.Aplicacion.Entidades
+
+<PageTitle>Biblioteca - Libros</PageTitle> 
+
+
+
+<DialogoConfirmacion @ref="dialogo" OnConfirmado="Eliminar"/>
+
+
+
+
+<button type="button" class="btn btn-success" @onclick="nuevoLibro">
+    <i class="fas fa-check"></i> Registrar nuevo libro
+</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Titulo</th>
+            <th>Autor</th>
+
+            <th>Año de publicacion</th>
+            <th>Genero</th>
+            <th>Nro de ejemplares</th>
+
+            <th>Acción</th>
+            
+        </tr>
+    </thead>
+ <tbody>
+
+    @foreach (var libro in _lista)
+    {
+    <tr>
+        <td>@libro.Id</td>
+        <td>@libro.titulo</td>
+        <td>@libro.autor</td>
+        <td>@libro.añoPublicacion</td>
+        <td>@libro.genero</td>
+        <td>@libro.numeroEjemplar</td>
+        
+        <td>
+            <button class="btn btn-primary">
+                <span class="oi oi-pencil" @onclick="()=>ModificarLibro(libro.Id)"></span>
+            </button>
+            <button class="btn btn-danger" @onclick="()=>ConfirmarEliminacion(libro)">
+                <span class="oi oi-trash"></span>
+            </button>
+        </td>
+
+    </tr>
+    }
+ </tbody
+
+</table>
+
+   
+
+
+@code{
+
+
+
+private bool _mostrarPersonas {get; set;} = false;
+
+List<Estudiante> _listaEstudiante = new List<Estudiante>();
+List<Docente> _listaDocente = new List<Docente>();
+
+ protected override void OnInitialized(){
+            _listaDocente = ListarDocenteUseCase.Ejecutar();
+            _listaEstudiante = ListarEstudianteUseCase.Ejecutar();
+            _lista= ListarLibroUseCase.Ejecutar();
+        }
+
+
+private Prestamo? prestamoFinal = new Prestamo ();
+    List<Libro> _lista = new List<Libro>();
+    DialogoConfirmacion dialogo = null!;
+ Libro? _libroParaEliminar = null;
+
+ private void ModificarLibro(int id){
+    Navigator.NavigateTo($"/libro/{id}");
+ }
+
+private void ConfirmarEliminacion(Libro libro)
+{
+    _libroParaEliminar = libro;
+    dialogo.CambiarMensaje($"¿Desea eliminar al Libro {libro.titulo} de {libro.autor}?");
+    dialogo.Mostrar();
+}
+ private void Eliminar(){
+    if (_libroParaEliminar != null)
+    {
+    EliminarLibroUseCase.Ejecutar(_libroParaEliminar.Id);
+    _lista = ListarLibroUseCase.Ejecutar(); //se actualiza la lista de clientes
+    }
+ }
+ private void RealizarPrestamo (Libro libro){
+    if (prestamoFinal != null){
+        prestamoFinal.Idlibro = libro.Id;
+        _mostrarPersonas = true;
+    }
+ }
+
+ 
+ private void volver(){
+    _mostrarPersonas = false;
+ }
+
+ private void nuevoLibro(){
+    Navigator.NavigateTo("/libro");
+ }
+}

@@ -1,0 +1,80 @@
+@page "/estudiante/{id:int?}"
+@inject ObtenerEstudianteUseCase ObtenerEstudianteUseCase
+@inject ModificarEstudianteUseCase ModificarEstudianteUseCase
+@inject NavigationManager Navegador;
+@inject AgregarEstudianteUseCase AgregarEstudianteUseCase
+
+
+
+
+
+<button type="button" class="btn btn-success" @onclick="volver">
+    <i class="fas fa-check"></i> Volver
+</button>
+@if (_esNuevoEstudiante){
+    <PageTitle>Biblioteca - Registrar estudiante</PageTitle>
+    <h3>Agregando un nuevo Estudiante</h3>
+}
+else{
+    <PageTitle>Biblioteca - Editar estudiante</PageTitle>
+    <h3>Modificando al Estudiante "@_estudiante.nombre"</h3>
+}
+
+<label for="numero_Carnet">Numero de carnet: </label>
+<input placeholder="*xxx-xxx-xx" @bind="_estudiante.numero_Carnet" class="form-control">
+<label for="nroAlumno">Numero de alumno: </label>
+<input placeholder="*xx-x-x-xx" @bind="_estudiante.nroAlumno" class="form-control">
+<label for="direccion">Direccion: </label>
+<input placeholder="*11 e/ 520 y 521" @bind="_estudiante.direccion" class="form-control">
+<label for="carrera">Carrera: </label>
+<input placeholder="*Licenciatura en sistemas" @bind="_estudiante.carrera" class="form-control">
+<label for="nombre">Nombre: </label>
+<input placeholder="*Juan" @bind="_estudiante.nombre" class="form-control">
+<label for="apellido">Apellido: </label>
+<input placeholder="*Cruz" @bind="_estudiante.apellido" class="form-control">
+<label for="facultad">Facultad: </label>
+<input placeholder="*Informatica" @bind="_estudiante.facultad" class="form-control">
+<label for="telefono">Telefono: </label>
+<input placeholder="*55544" @bind="_estudiante.telefono" class="form-control">
+<label for="correo">Correo: </label>
+<input placeholder="*Informatica@trucho.com" @bind="_estudiante.correo" class="form-control">
+
+<button class="btn btn-primary" @onclick="Aceptar">Aceptar</button>
+@code {
+ Estudiante _estudiante = new Estudiante();
+
+ [Parameter] public int? id { get; set; }
+ bool _esNuevoEstudiante=true;
+ protected override void OnParametersSet()
+ {
+ if (id != null)
+ {
+ var cli_hallado = ObtenerEstudianteUseCase.Ejecutar(id.Value);
+ if (cli_hallado != null)
+ {
+ _estudiante = cli_hallado;
+ _esNuevoEstudiante=false;
+ }
+ }
+ }
+
+
+ void Aceptar()
+ {
+ if (_esNuevoEstudiante)
+ {
+ AgregarEstudianteUseCase.Ejecutar(_estudiante);
+ }
+ else
+ {
+ ModificarEstudianteUseCase.Ejecutar(_estudiante);
+ }
+
+ _estudiante = new Estudiante();
+ Navegador.NavigateTo("estudiantes");
+ }
+
+ void volver(){
+    Navegador.NavigateTo("/estudiantes");
+ }
+}
